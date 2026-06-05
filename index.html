@@ -1,0 +1,2323 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JUST SECRET — Print Order Control System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      :root {
+        --ink: #0a0a0a;
+        --paper: #ffffff;
+        --smoke: #f4f4f4;
+        --ash: #e4e4e4;
+        --steel: #9a9a9a;
+        --mute: #6b6b6b;
+        --line: #0a0a0a;
+        --line-soft: #d6d6d6;
+        --shadow: 8px 8px 0 var(--ink);
+        --shadow-sm: 4px 4px 0 var(--ink);
+        --font-brand: "Anton", Impact, sans-serif;
+        --font-ui: "Manrope", system-ui, sans-serif;
+        --font-mono: "Space Mono", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        font-family: var(--font-ui);
+        background: var(--paper);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.5;
+        background-image: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 39px,
+          rgba(0, 0, 0, 0.025) 39px,
+          rgba(0, 0, 0, 0.025) 40px
+        );
+      }
+
+      ::selection {
+        background: var(--ink);
+        color: var(--paper);
+      }
+
+      /* ---------- Layout ---------- */
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 22px 80px;
+      }
+
+      header.top {
+        border-bottom: 3px solid var(--ink);
+        background: var(--paper);
+        position: sticky;
+        top: 0;
+        z-index: 40;
+      }
+      .top-inner {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 18px 22px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .brand-mark {
+        width: 46px;
+        height: 46px;
+        background: var(--ink);
+        color: var(--paper);
+        display: grid;
+        place-items: center;
+        font-family: var(--font-brand);
+        font-size: 26px;
+        line-height: 1;
+        letter-spacing: 0.5px;
+        flex: 0 0 auto;
+        box-shadow: var(--shadow-sm);
+      }
+      .brand-text h1 {
+        font-family: var(--font-brand);
+        font-size: 30px;
+        letter-spacing: 1.5px;
+        line-height: 0.9;
+      }
+      .brand-text .redacted {
+        display: inline-block;
+        background: var(--ink);
+        color: var(--ink);
+        padding: 0 4px;
+        user-select: none;
+      }
+      .brand-text p {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin-top: 5px;
+      }
+      .top-meta {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        text-align: right;
+        color: var(--mute);
+        letter-spacing: 0.5px;
+      }
+      .top-meta strong {
+        color: var(--ink);
+      }
+
+      /* ---------- Tabs ---------- */
+      nav.tabs {
+        display: flex;
+        gap: 0;
+        border-top: 1px solid var(--ink);
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+      nav.tabs button {
+        flex: 1;
+        appearance: none;
+        background: var(--paper);
+        border: 0;
+        border-right: 1px solid var(--ink);
+        padding: 13px 10px;
+        cursor: pointer;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--mute);
+        transition: 0.12s;
+      }
+      nav.tabs button:last-child {
+        border-right: 0;
+      }
+      nav.tabs button:hover {
+        background: var(--smoke);
+        color: var(--ink);
+      }
+      nav.tabs button.active {
+        background: var(--ink);
+        color: var(--paper);
+      }
+
+      /* ---------- Sections ---------- */
+      .view {
+        display: none;
+        padding-top: 34px;
+      }
+      .view.active {
+        display: block;
+        animation: fade 0.3s ease;
+      }
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 22px;
+      }
+      .section-head h2 {
+        font-family: var(--font-brand);
+        font-size: 34px;
+        letter-spacing: 1px;
+        line-height: 0.95;
+      }
+      .section-head .sub {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        color: var(--mute);
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
+
+      /* ---------- Buttons ---------- */
+      .btn {
+        appearance: none;
+        cursor: pointer;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 12px 18px;
+        border: 2px solid var(--ink);
+        background: var(--paper);
+        color: var(--ink);
+        transition: 0.12s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn:hover {
+        box-shadow: var(--shadow-sm);
+        transform: translate(-2px, -2px);
+      }
+      .btn:active {
+        box-shadow: none;
+        transform: none;
+      }
+      .btn.solid {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .btn.sm {
+        padding: 7px 11px;
+        font-size: 10.5px;
+      }
+      .btn.ghost {
+        border-color: var(--line-soft);
+        color: var(--mute);
+      }
+      .btn.ghost:hover {
+        border-color: var(--ink);
+        color: var(--ink);
+      }
+
+      /* ---------- Dashboard ---------- */
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        border: 2px solid var(--ink);
+        margin-bottom: 30px;
+      }
+      .stat {
+        padding: 22px 20px;
+        border-right: 2px solid var(--ink);
+      }
+      .stat:last-child {
+        border-right: 0;
+      }
+      .stat .label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--mute);
+      }
+      .stat .value {
+        font-family: var(--font-brand);
+        font-size: 34px;
+        letter-spacing: 0.5px;
+        margin-top: 8px;
+        line-height: 1;
+      }
+      .stat .value.small {
+        font-size: 24px;
+      }
+      .stat .foot {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--steel);
+        margin-top: 8px;
+        letter-spacing: 0.5px;
+      }
+
+      .panel-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 24px;
+      }
+      .panel {
+        border: 2px solid var(--ink);
+      }
+      .panel-head {
+        padding: 14px 18px;
+        border-bottom: 2px solid var(--ink);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .panel-head h3 {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .panel-body {
+        padding: 18px;
+      }
+
+      .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .bar-row:last-child {
+        margin-bottom: 0;
+      }
+      .bar-row .bl {
+        width: 88px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        flex: 0 0 auto;
+      }
+      .bar-track {
+        flex: 1;
+        height: 24px;
+        background: var(--smoke);
+        border: 1.5px solid var(--ink);
+        position: relative;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        background: var(--ink);
+        transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        min-width: 2px;
+      }
+      .bar-fill.hatch {
+        background: repeating-linear-gradient(
+          45deg,
+          var(--ink),
+          var(--ink) 6px,
+          var(--paper) 6px,
+          var(--paper) 9px
+        );
+      }
+      .bar-fill.dot {
+        background: radial-gradient(var(--ink) 1.6px, transparent 1.7px);
+        background-size: 7px 7px;
+        background-color: var(--paper);
+      }
+      .bar-fill.solid {
+        background: var(--ink);
+      }
+      .bar-row .bv {
+        width: 34px;
+        text-align: right;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 13px;
+        flex: 0 0 auto;
+      }
+
+      .mono-list {
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+      .mono-list .ml-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 9px 0;
+        border-bottom: 1px dashed var(--line-soft);
+      }
+      .mono-list .ml-row:last-child {
+        border-bottom: 0;
+      }
+      .mono-list .ml-row span:last-child {
+        font-weight: 700;
+      }
+
+      /* ---------- Search / toolbar ---------- */
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .search {
+        flex: 1;
+        min-width: 220px;
+        position: relative;
+      }
+      .search input {
+        width: 100%;
+        padding: 13px 14px 13px 40px;
+        border: 2px solid var(--ink);
+        background: var(--paper);
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--ink);
+        outline: none;
+      }
+      .search input:focus {
+        box-shadow: var(--shadow-sm);
+      }
+      .search svg {
+        position: absolute;
+        left: 13px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .filter-pills {
+        display: flex;
+        gap: 0;
+        border: 2px solid var(--ink);
+      }
+      .filter-pills button {
+        appearance: none;
+        border: 0;
+        border-right: 1.5px solid var(--ink);
+        background: var(--paper);
+        padding: 11px 13px;
+        cursor: pointer;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--mute);
+        transition: 0.12s;
+      }
+      .filter-pills button:last-child {
+        border-right: 0;
+      }
+      .filter-pills button.active {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .filter-pills button:hover:not(.active) {
+        background: var(--smoke);
+      }
+
+      /* ---------- Table ---------- */
+      .table-wrap {
+        border: 2px solid var(--ink);
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 840px;
+      }
+      thead th {
+        background: var(--ink);
+        color: var(--paper);
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        text-align: left;
+        padding: 12px 14px;
+        white-space: nowrap;
+      }
+      tbody td {
+        padding: 13px 14px;
+        border-bottom: 1px solid var(--line-soft);
+        font-size: 13.5px;
+        vertical-align: middle;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      tbody tr:hover {
+        background: var(--smoke);
+      }
+      td .nospk {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 12.5px;
+      }
+      td .cust {
+        font-weight: 700;
+      }
+      td .sub {
+        font-size: 11.5px;
+        color: var(--mute);
+      }
+      td.num {
+        font-family: var(--font-mono);
+        white-space: nowrap;
+      }
+
+      .badge {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 4px 9px;
+        border: 1.5px solid var(--ink);
+        display: inline-block;
+        white-space: nowrap;
+        font-weight: 700;
+      }
+      .badge.baru {
+        background: var(--paper);
+        color: var(--ink);
+      }
+      .badge.proses {
+        background: var(--paper);
+        color: var(--ink);
+        background-image: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 4px,
+          rgba(0, 0, 0, 0.13) 4px,
+          rgba(0, 0, 0, 0.13) 6px
+        );
+      }
+      .badge.selesai {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .badge.batal {
+        background: var(--paper);
+        color: var(--steel);
+        border-color: var(--steel);
+        text-decoration: line-through;
+      }
+
+      .pay {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .pay.lunas {
+        font-weight: 700;
+      }
+      .pay.belum {
+        color: var(--mute);
+      }
+
+      .row-actions {
+        display: flex;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      .icon-btn {
+        appearance: none;
+        border: 1.5px solid var(--ink);
+        background: var(--paper);
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        transition: 0.12s;
+        padding: 0;
+      }
+      .icon-btn:hover {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .icon-btn:hover svg {
+        stroke: var(--paper);
+      }
+      .icon-btn svg {
+        stroke: var(--ink);
+      }
+
+      .empty {
+        padding: 60px 20px;
+        text-align: center;
+      }
+      .empty .big {
+        font-family: var(--font-brand);
+        font-size: 26px;
+        letter-spacing: 1px;
+        color: var(--ash);
+      }
+      .empty p {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--mute);
+        margin-top: 8px;
+        letter-spacing: 1px;
+      }
+
+      /* ---------- Modal ---------- */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 10, 10, 0.55);
+        z-index: 90;
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 40px 18px;
+        overflow-y: auto;
+      }
+      .overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--paper);
+        border: 3px solid var(--ink);
+        box-shadow: var(--shadow);
+        width: 100%;
+        max-width: 680px;
+        animation: pop 0.22s ease;
+      }
+      @keyframes pop {
+        from {
+          opacity: 0;
+          transform: translateY(-14px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 22px;
+        border-bottom: 2px solid var(--ink);
+      }
+      .modal-head h3 {
+        font-family: var(--font-brand);
+        font-size: 24px;
+        letter-spacing: 0.8px;
+      }
+      .modal-head .close {
+        appearance: none;
+        border: 0;
+        background: none;
+        cursor: pointer;
+        font-family: var(--font-mono);
+        font-size: 22px;
+        line-height: 1;
+      }
+      .modal-body {
+        padding: 22px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field.full {
+        grid-column: 1 / -1;
+      }
+      .field label {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--mute);
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        border: 2px solid var(--ink);
+        background: var(--paper);
+        padding: 11px 12px;
+        font-family: var(--font-ui);
+        font-size: 14px;
+        color: var(--ink);
+        outline: none;
+        width: 100%;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        box-shadow: var(--shadow-sm);
+      }
+      .field textarea {
+        resize: vertical;
+        min-height: 64px;
+      }
+      .field .hint {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--steel);
+      }
+      .field input[readonly] {
+        background: var(--smoke);
+        color: var(--mute);
+      }
+      .modal-foot {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        padding: 18px 22px;
+        border-top: 2px solid var(--ink);
+      }
+
+      /* ---------- Toast ---------- */
+      .toast {
+        position: fixed;
+        bottom: 26px;
+        left: 50%;
+        transform: translateX(-50%) translateY(120%);
+        background: var(--ink);
+        color: var(--paper);
+        padding: 13px 22px;
+        z-index: 200;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        border: 2px solid var(--ink);
+        box-shadow: var(--shadow-sm);
+        transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.2, 1);
+      }
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      footer.foot {
+        margin-top: 50px;
+        border-top: 1px solid var(--line-soft);
+        padding-top: 16px;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 1px;
+        color: var(--steel);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      /* ---------- SPK Print ---------- */
+      #spk-print {
+        display: none;
+      }
+
+      @media print {
+        body {
+          background: #fff !important;
+          background-image: none !important;
+        }
+        body > * {
+          display: none !important;
+        }
+        #spk-print {
+          display: block !important;
+        }
+        @page {
+          size: A4;
+          margin: 14mm;
+        }
+      }
+
+      .spk-sheet {
+        font-family: var(--font-ui);
+        color: #000;
+        width: 100%;
+      }
+      .spk-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 3px solid #000;
+        padding-bottom: 14px;
+      }
+      .spk-brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .spk-mark {
+        width: 54px;
+        height: 54px;
+        background: #000;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-brand);
+        font-size: 30px;
+      }
+      .spk-brand h1 {
+        font-family: var(--font-brand);
+        font-size: 34px;
+        letter-spacing: 1.5px;
+        line-height: 0.9;
+      }
+      .spk-brand p {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-top: 5px;
+      }
+      .spk-title {
+        text-align: right;
+      }
+      .spk-title .doc {
+        font-family: var(--font-brand);
+        font-size: 26px;
+        letter-spacing: 1px;
+      }
+      .spk-title .docsub {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        color: #444;
+      }
+      .spk-no {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 14px;
+        margin-top: 6px;
+        border: 2px solid #000;
+        display: inline-block;
+        padding: 4px 10px;
+      }
+
+      .spk-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        margin-top: 18px;
+        border: 2px solid #000;
+      }
+      .spk-meta .mcell {
+        padding: 10px 14px;
+        border-right: 2px solid #000;
+        border-bottom: 1px solid #000;
+      }
+      .spk-meta .mcell:nth-child(2n) {
+        border-right: 0;
+      }
+      .spk-meta .mcell:nth-last-child(-n + 2) {
+        border-bottom: 0;
+      }
+      .spk-meta .mlabel {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #555;
+      }
+      .spk-meta .mval {
+        font-size: 15px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .spk-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 18px;
+      }
+      .spk-table th {
+        background: #000;
+        color: #fff;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 9px 12px;
+        text-align: left;
+      }
+      .spk-table td {
+        padding: 11px 12px;
+        border-bottom: 1px solid #000;
+        font-size: 14px;
+      }
+      .spk-table .r {
+        text-align: right;
+        font-family: var(--font-mono);
+      }
+      .spk-totals {
+        width: 100%;
+        margin-top: 14px;
+        display: flex;
+        justify-content: flex-end;
+      }
+      .spk-totals table {
+        border-collapse: collapse;
+        min-width: 300px;
+      }
+      .spk-totals td {
+        padding: 7px 14px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+      }
+      .spk-totals td:last-child {
+        text-align: right;
+        font-weight: 700;
+      }
+      .spk-totals tr.grand td {
+        border-top: 2px solid #000;
+        font-size: 16px;
+      }
+
+      .spk-notes {
+        margin-top: 18px;
+        border: 2px solid #000;
+        padding: 12px 14px;
+        min-height: 60px;
+      }
+      .spk-notes .nl {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #555;
+      }
+      .spk-notes .nv {
+        font-size: 14px;
+        margin-top: 5px;
+        white-space: pre-wrap;
+      }
+
+      .spk-sign {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 40px;
+        gap: 30px;
+      }
+      .spk-sign .sg {
+        text-align: center;
+        flex: 1;
+      }
+      .spk-sign .role {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .spk-sign .line {
+        border-top: 1.5px solid #000;
+        margin-top: 60px;
+        padding-top: 6px;
+        font-size: 12px;
+      }
+      .spk-foot {
+        margin-top: 26px;
+        border-top: 1px solid #000;
+        padding-top: 8px;
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: 1px;
+        color: #555;
+        display: flex;
+        justify-content: space-between;
+      }
+      .spk-pay {
+        margin-top: 22px;
+        border: 2px solid #000;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .spk-pay .pay-logo {
+        flex: 0 0 auto;
+      }
+      .spk-pay .pay-info {
+        line-height: 1.35;
+      }
+      .spk-pay .pl {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #555;
+      }
+      .spk-pay .pv {
+        font-family: var(--font-mono);
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin-top: 3px;
+      }
+      .spk-pay .pa {
+        font-size: 13px;
+        margin-top: 1px;
+      }
+      .pay-logo-fb {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: 2px;
+        padding: 8px 14px;
+        border: 2px solid #000;
+        display: inline-block;
+      }
+
+      /* ---------- Responsive ---------- */
+      @media (max-width: 880px) {
+        .stat-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .stat:nth-child(2) {
+          border-right: 0;
+        }
+        .stat:nth-child(1),
+        .stat:nth-child(2) {
+          border-bottom: 2px solid var(--ink);
+        }
+        .panel-grid {
+          grid-template-columns: 1fr;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* ---------- PIN Gate ---------- */
+      .pin-gate {
+        position: fixed;
+        inset: 0;
+        background: var(--ink);
+        z-index: 300;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background-image: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 18px,
+          rgba(255, 255, 255, 0.03) 18px,
+          rgba(255, 255, 255, 0.03) 19px
+        );
+      }
+      .pin-gate.hidden {
+        display: none;
+      }
+      .pin-box {
+        background: var(--paper);
+        padding: 38px 34px;
+        max-width: 400px;
+        width: 100%;
+        box-shadow: 10px 10px 0 #2a2a2a;
+      }
+      .pin-brand-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .pin-mark {
+        width: 42px;
+        height: 42px;
+        background: var(--ink);
+        color: var(--paper);
+        display: grid;
+        place-items: center;
+        font-family: var(--font-brand);
+        font-size: 24px;
+      }
+      .pin-brand {
+        font-family: var(--font-brand);
+        font-size: 30px;
+        letter-spacing: 1.5px;
+        line-height: 0.95;
+      }
+      .pin-brand .redacted {
+        display: inline-block;
+        background: var(--ink);
+        color: var(--ink);
+        padding: 0 4px;
+      }
+      .pin-sub {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--mute);
+        margin: 22px 0 10px;
+      }
+      .pin-box input {
+        width: 100%;
+        padding: 15px 14px;
+        border: 2px solid var(--ink);
+        font-family: var(--font-mono);
+        font-size: 20px;
+        letter-spacing: 8px;
+        text-align: center;
+        outline: none;
+        background: var(--paper);
+      }
+      .pin-box input:focus {
+        box-shadow: 4px 4px 0 var(--ink);
+      }
+      .pin-btn {
+        width: 100%;
+        margin-top: 12px;
+        padding: 14px;
+        border: 2px solid var(--ink);
+        background: var(--ink);
+        color: var(--paper);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: 0.12s;
+      }
+      .pin-btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 4px 4px 0 #444;
+      }
+      .pin-err {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: #000;
+        margin-top: 10px;
+        letter-spacing: 0.5px;
+        min-height: 14px;
+        font-weight: 700;
+      }
+      .pin-err.shake {
+        animation: shake 0.35s;
+      }
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-6px);
+        }
+        75% {
+          transform: translateX(6px);
+        }
+      }
+      .pin-foot {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--steel);
+        margin-top: 24px;
+        text-align: center;
+        border-top: 1px dashed var(--line-soft);
+        padding-top: 14px;
+      }
+      .sync-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--ink);
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: middle;
+        animation: pulse 1.8s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.25;
+        }
+      }
+      .logout-btn {
+        appearance: none;
+        border: 1.5px solid var(--ink);
+        background: transparent;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-top: 6px;
+        color: var(--ink);
+      }
+      .logout-btn:hover {
+        background: var(--ink);
+        color: var(--paper);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="top-inner">
+        <div class="brand">
+          <div class="brand-mark">JS</div>
+          <div class="brand-text">
+            <h1>JUST <span class="redacted">SECRET</span></h1>
+            <p>Print Order Control System</p>
+          </div>
+        </div>
+        <div class="top-meta">
+          <div>DOC.CTRL — <strong>v2.0</strong></div>
+          <div id="todayMeta"></div>
+          <button class="logout-btn" onclick="logout()">↺ Keluar</button>
+        </div>
+      </div>
+      <nav class="tabs">
+        <button data-view="dashboard" class="active">Dashboard</button>
+        <button data-view="pesanan">Daftar Pesanan</button>
+      </nav>
+    </header>
+
+    <div class="wrap">
+      <!-- ============ DASHBOARD ============ -->
+      <section class="view active" id="view-dashboard">
+        <div class="section-head">
+          <div>
+            <h2>DASHBOARD OMZET</h2>
+            <div class="sub">Ringkasan operasional percetakan</div>
+          </div>
+          <button class="btn solid" onclick="openForm('create')">
+            + Pesanan Baru
+          </button>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="label">Total Omzet</div>
+            <div class="value small" id="stOmzet">Rp 0</div>
+            <div class="foot" id="stOmzetFoot">dari 0 pesanan</div>
+          </div>
+          <div class="stat">
+            <div class="label">Sudah Diterima</div>
+            <div class="value small" id="stDiterima">Rp 0</div>
+            <div class="foot">DP + pelunasan</div>
+          </div>
+          <div class="stat">
+            <div class="label">Piutang / Sisa</div>
+            <div class="value small" id="stPiutang">Rp 0</div>
+            <div class="foot">belum tertagih</div>
+          </div>
+          <div class="stat">
+            <div class="label">Omzet Bulan Ini</div>
+            <div class="value small" id="stBulan">Rp 0</div>
+            <div class="foot" id="stBulanFoot"></div>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Status Pengerjaan</h3>
+              <span class="badge" id="totalCount">0 ORDER</span>
+            </div>
+            <div class="panel-body" id="statusBars"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Produk Terlaris</h3></div>
+            <div class="panel-body">
+              <div class="mono-list" id="topProduk"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PESANAN ============ -->
+      <section class="view" id="view-pesanan">
+        <div class="section-head">
+          <div>
+            <h2>DAFTAR PESANAN</h2>
+            <div class="sub">Input · Edit · Hapus · Cetak SPK</div>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap">
+            <button class="btn ghost" onclick="exportCSV()">
+              ⬇ Export CSV
+            </button>
+            <button class="btn solid" onclick="openForm('create')">
+              + Pesanan Baru
+            </button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#6b6b6b"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="M21 21l-4.3-4.3" />
+            </svg>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Cari nama, no. SPK, produk, telepon..."
+              oninput="render()"
+            />
+          </div>
+          <div class="filter-pills" id="filterPills">
+            <button data-f="all" class="active">Semua</button>
+            <button data-f="Baru">Baru</button>
+            <button data-f="Proses">Proses</button>
+            <button data-f="Selesai">Selesai</button>
+            <button data-f="Batal">Batal</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>No. SPK / Tanggal</th>
+                <th>Pelanggan</th>
+                <th>Produk</th>
+                <th class="num">Qty</th>
+                <th class="num">Total</th>
+                <th>Bayar</th>
+                <th>Status</th>
+                <th style="text-align: right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <span>JUST SECRET — Print Order Control System</span>
+        <span id="storageMeta"
+          ><span class="sync-dot"></span>TERSINKRON · SUPABASE CLOUD</span
+        >
+      </footer>
+    </div>
+
+    <!-- ============ MODAL FORM ============ -->
+    <div class="overlay" id="overlay">
+      <div class="modal">
+        <div class="modal-head">
+          <h3 id="modalTitle">PESANAN BARU</h3>
+          <button class="close" onclick="closeForm()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>No. SPK</label>
+              <input type="text" id="fNoSPK" readonly />
+            </div>
+            <div class="field">
+              <label>Tanggal Order</label>
+              <input type="date" id="fTanggal" />
+            </div>
+            <div class="field">
+              <label>Nama Pelanggan *</label>
+              <input type="text" id="fNama" placeholder="cth. Budi Santoso" />
+            </div>
+            <div class="field">
+              <label>Telepon / WA</label>
+              <input type="text" id="fTelepon" placeholder="cth. 0812xxxx" />
+            </div>
+            <div class="field">
+              <label>Jenis Produk *</label>
+              <input
+                type="text"
+                id="fProduk"
+                list="produkList"
+                placeholder="cth. Banner, Brosur, Kartu Nama"
+              />
+              <datalist id="produkList">
+                <option>Banner / Spanduk</option>
+                <option>Brosur / Flyer</option>
+                <option>Kartu Nama</option>
+                <option>Stiker / Label</option>
+                <option>Undangan</option>
+                <option>Poster</option>
+                <option>X-Banner / Roll Banner</option>
+                <option>Buku / Yasin</option>
+                <option>Kalender</option>
+                <option>Nota / Faktur</option>
+              </datalist>
+            </div>
+            <div class="field">
+              <label>Ukuran / Spesifikasi</label>
+              <input
+                type="text"
+                id="fSpek"
+                placeholder="cth. Flexi China 280gr, laminasi doff"
+              />
+            </div>
+            <div class="field full">
+              <label>Tipe Harga *</label>
+              <select id="fMode" onchange="onModeChange()">
+                <option value="pcs">Per Pcs / Satuan</option>
+                <option value="m2">
+                  Per Meter&sup2; — Banner / Spanduk / Stiker
+                </option>
+              </select>
+            </div>
+            <div class="field dim" style="display: none">
+              <label>Panjang (m) *</label>
+              <input
+                type="number"
+                id="fPanjang"
+                min="0"
+                step="0.01"
+                value="0"
+                oninput="calcTotal()"
+              />
+            </div>
+            <div class="field dim" style="display: none">
+              <label>Lebar (m) *</label>
+              <input
+                type="number"
+                id="fLebar"
+                min="0"
+                step="0.01"
+                value="0"
+                oninput="calcTotal()"
+              />
+            </div>
+            <div class="field">
+              <label id="lblQty">Qty *</label>
+              <input
+                type="number"
+                id="fQty"
+                min="1"
+                value="1"
+                oninput="calcTotal()"
+              />
+            </div>
+            <div class="field">
+              <label id="lblHarga">Harga Satuan (Rp) *</label>
+              <input
+                type="number"
+                id="fHarga"
+                min="0"
+                value="0"
+                oninput="calcTotal()"
+              />
+            </div>
+            <div class="field dim" style="display: none">
+              <label>Luas Total (m&sup2;)</label>
+              <input type="text" id="fLuas" readonly />
+            </div>
+            <div class="field">
+              <label>Total (Rp)</label>
+              <input type="text" id="fTotal" readonly />
+            </div>
+            <div class="field">
+              <label>Uang Muka / DP (Rp)</label>
+              <input
+                type="number"
+                id="fDP"
+                min="0"
+                value="0"
+                oninput="calcTotal()"
+              />
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select id="fStatus">
+                <option>Baru</option>
+                <option>Proses</option>
+                <option>Selesai</option>
+                <option>Batal</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Deadline</label>
+              <input type="date" id="fDeadline" />
+            </div>
+            <div class="field full">
+              <label>Catatan</label>
+              <textarea
+                id="fCatatan"
+                placeholder="Catatan tambahan, instruksi produksi..."
+              ></textarea>
+              <span class="hint"
+                >Sisa pembayaran akan dihitung otomatis: Total − DP.</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn ghost" onclick="closeForm()">Batal</button>
+          <button class="btn solid" onclick="saveOrder()">
+            Simpan Pesanan
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SPK PRINT AREA ============ -->
+    <div id="spk-print"><div class="spk-sheet" id="spkSheet"></div></div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      /* ============================================================
+   JUST SECRET — Print Order Control System
+   Vanilla JS · Local Storage · single file
+   ============================================================ */
+
+      /* ============================================================
+   SUPABASE CONFIG — isi 3 baris di bawah ini sebelum deploy
+   ============================================================ */
+      const SUPABASE_URL = "https://eubeggcdvldbqaayykyv.supabase.co/rest/v1/";
+      const SUPABASE_ANON_KEY = "sb_secret_H-rWTcbwMUPs2QZEs7ab7Q_iAKr187d";
+      const APP_PIN = "150404"; // ganti dengan PIN tim kamu
+
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const AUTH_KEY = "js_auth_v2";
+
+      /* ---------- Branding & Payment Info (boleh diedit) ---------- */
+      const COMPANY = {
+        name: "JUST SECRET",
+        tagline: "Digital Printing & Production",
+        mark: "JS", // dua huruf di kotak logo SPK
+      };
+
+      const PAYMENT = {
+        bank: "BANK BCA",
+        account: "7131489611",
+        holder: "Falka Derizqia",
+        // Cara pasang logo bank asli, pilih salah satu:
+        //   • File lokal di folder sama: logoSrc: 'bca.png'
+        //   • URL gambar online        : logoSrc: 'https://situs.kamu/bca.png'
+        //   • Embed base64 (offline OK): logoSrc: 'data:image/png;base64,iVBORw0KGgo...'
+        //   • Kosongkan ('') = tampil teks fallback (kotak bertuliskan BCA)
+        logoSrc: "Bank_Central_Asia.png",
+        logoHeight: 44, // tinggi logo dalam px
+      };
+
+      let orders = [];
+      let activeFilter = "all";
+      let editingId = null;
+
+      /* ---------- Utilities ---------- */
+      const $ = (id) => document.getElementById(id);
+
+      function rupiah(n) {
+        n = Number(n) || 0;
+        return "Rp " + n.toLocaleString("id-ID");
+      }
+      function todayISO() {
+        return new Date().toISOString().slice(0, 10);
+      }
+      function fmtDate(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso + "T00:00:00");
+        if (isNaN(d)) return iso;
+        return d.toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      }
+      function esc(s) {
+        return String(s ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+      function toast(msg) {
+        const t = $("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(t._t);
+        t._t = setTimeout(() => t.classList.remove("show"), 2200);
+      }
+
+      /* ---------- Supabase Storage ---------- */
+      function rowToOrder(r) {
+        return {
+          id: r.id,
+          noSPK: r.no_spk,
+          tanggal: r.tanggal || "",
+          nama: r.nama,
+          telepon: r.telepon || "",
+          produk: r.produk,
+          spek: r.spek || "",
+          mode: r.mode || "pcs",
+          panjang: Number(r.panjang) || 0,
+          lebar: Number(r.lebar) || 0,
+          luas: Number(r.luas) || 0,
+          qty: Number(r.qty) || 0,
+          harga: Number(r.harga) || 0,
+          total: Number(r.total) || 0,
+          dp: Number(r.dp) || 0,
+          sisa: Number(r.sisa) || 0,
+          status: r.status || "Baru",
+          deadline: r.deadline || "",
+          catatan: r.catatan || "",
+          createdAt: r.created_at,
+        };
+      }
+      function orderToRow(o) {
+        return {
+          no_spk: o.noSPK,
+          tanggal: o.tanggal || null,
+          nama: o.nama,
+          telepon: o.telepon,
+          produk: o.produk,
+          spek: o.spek,
+          mode: o.mode,
+          panjang: o.panjang,
+          lebar: o.lebar,
+          luas: o.luas,
+          qty: o.qty,
+          harga: o.harga,
+          total: o.total,
+          dp: o.dp,
+          sisa: o.sisa,
+          status: o.status,
+          deadline: o.deadline || null,
+          catatan: o.catatan,
+        };
+      }
+
+      async function load() {
+        const { data, error } = await sb
+          .from("orders")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) {
+          toast("Gagal memuat: " + error.message);
+          console.error(error);
+          return;
+        }
+        orders = (data || []).map(rowToOrder);
+      }
+
+      async function nextSPK() {
+        const now = new Date();
+        const yy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, "0");
+        const prefix = `JS/${yy}/${mm}/`;
+        const { data, error } = await sb
+          .from("orders")
+          .select("no_spk")
+          .like("no_spk", prefix + "%")
+          .order("no_spk", { ascending: false })
+          .limit(1);
+        let seq = 1;
+        if (!error && data && data.length) {
+          const last = data[0].no_spk.split("/").pop();
+          seq = (parseInt(last, 10) || 0) + 1;
+        }
+        return prefix + String(seq).padStart(4, "0");
+      }
+
+      /* ---------- Form ---------- */
+      function calcTotal() {
+        const mode = $("fMode").value;
+        const qty = Number($("fQty").value) || 0;
+        const harga = Number($("fHarga").value) || 0;
+        if (mode === "m2") {
+          const p = Number($("fPanjang").value) || 0;
+          const l = Number($("fLebar").value) || 0;
+          const luas = p * l * qty;
+          $("fLuas").value =
+            (p * l).toLocaleString("id-ID", { maximumFractionDigits: 2 }) +
+            " m² × " +
+            qty +
+            "  =  " +
+            luas.toLocaleString("id-ID", { maximumFractionDigits: 2 }) +
+            " m²";
+          $("fTotal").value = rupiah(Math.round(luas * harga));
+        } else {
+          $("fTotal").value = rupiah(qty * harga);
+        }
+      }
+
+      function onModeChange() {
+        const m2 = $("fMode").value === "m2";
+        document
+          .querySelectorAll(".field.dim")
+          .forEach((el) => (el.style.display = m2 ? "" : "none"));
+        $("lblHarga").textContent = m2
+          ? "Harga / m² (Rp) *"
+          : "Harga Satuan (Rp) *";
+        $("lblQty").textContent = m2 ? "Qty (lembar) *" : "Qty *";
+        calcTotal();
+      }
+
+      async function openForm(mode, id) {
+        editingId = null;
+        $("overlay").classList.add("open");
+        document.body.style.overflow = "hidden";
+
+        if (mode === "edit") {
+          const o = orders.find((x) => x.id === id);
+          if (!o) return;
+          editingId = id;
+          $("modalTitle").textContent = "EDIT PESANAN";
+          $("fNoSPK").value = o.noSPK;
+          $("fTanggal").value = o.tanggal;
+          $("fNama").value = o.nama;
+          $("fTelepon").value = o.telepon;
+          $("fProduk").value = o.produk;
+          $("fSpek").value = o.spek;
+          $("fMode").value = o.mode || "pcs";
+          $("fPanjang").value = o.panjang || 0;
+          $("fLebar").value = o.lebar || 0;
+          $("fQty").value = o.qty;
+          $("fHarga").value = o.harga;
+          $("fDP").value = o.dp;
+          $("fStatus").value = o.status;
+          $("fDeadline").value = o.deadline;
+          $("fCatatan").value = o.catatan;
+        } else {
+          $("modalTitle").textContent = "PESANAN BARU";
+          $("fNoSPK").value = "Memuat...";
+          $("fTanggal").value = todayISO();
+          $("fNama").value = "";
+          $("fTelepon").value = "";
+          $("fProduk").value = "";
+          $("fSpek").value = "";
+          $("fMode").value = "pcs";
+          $("fPanjang").value = 0;
+          $("fLebar").value = 0;
+          $("fQty").value = 1;
+          $("fHarga").value = 0;
+          $("fDP").value = 0;
+          $("fStatus").value = "Baru";
+          $("fDeadline").value = "";
+          $("fCatatan").value = "";
+          $("fNoSPK").value = await nextSPK();
+        }
+        onModeChange();
+        setTimeout(() => $("fNama").focus(), 50);
+      }
+
+      function closeForm() {
+        $("overlay").classList.remove("open");
+        document.body.style.overflow = "";
+        editingId = null;
+      }
+
+      async function saveOrder() {
+        const nama = $("fNama").value.trim();
+        const produk = $("fProduk").value.trim();
+        if (!nama) {
+          toast("Nama pelanggan wajib diisi");
+          $("fNama").focus();
+          return;
+        }
+        if (!produk) {
+          toast("Jenis produk wajib diisi");
+          $("fProduk").focus();
+          return;
+        }
+
+        const mode = $("fMode").value;
+        const qty = Number($("fQty").value) || 0;
+        const harga = Number($("fHarga").value) || 0;
+        const dp = Number($("fDP").value) || 0;
+        const panjang = Number($("fPanjang").value) || 0;
+        const lebar = Number($("fLebar").value) || 0;
+
+        let luas = 0,
+          total = 0;
+        if (mode === "m2") {
+          if (panjang <= 0 || lebar <= 0) {
+            toast("Panjang & lebar wajib diisi");
+            $("fPanjang").focus();
+            return;
+          }
+          luas = panjang * lebar * qty;
+          total = Math.round(luas * harga);
+        } else {
+          total = qty * harga;
+        }
+
+        const data = {
+          noSPK: $("fNoSPK").value,
+          tanggal: $("fTanggal").value || todayISO(),
+          nama,
+          telepon: $("fTelepon").value.trim(),
+          produk,
+          spek: $("fSpek").value.trim(),
+          mode,
+          panjang,
+          lebar,
+          luas,
+          qty,
+          harga,
+          total,
+          dp,
+          sisa: Math.max(0, total - dp),
+          status: $("fStatus").value,
+          deadline: $("fDeadline").value,
+          catatan: $("fCatatan").value.trim(),
+        };
+
+        if (editingId) {
+          const { error } = await sb
+            .from("orders")
+            .update(orderToRow(data))
+            .eq("id", editingId);
+          if (error) {
+            toast("Gagal: " + error.message);
+            return;
+          }
+          const i = orders.findIndex((x) => x.id === editingId);
+          if (i > -1) orders[i] = { ...orders[i], ...data, id: editingId };
+          toast("Pesanan diperbarui");
+        } else {
+          const { data: inserted, error } = await sb
+            .from("orders")
+            .insert(orderToRow(data))
+            .select()
+            .single();
+          if (error) {
+            toast("Gagal: " + error.message);
+            return;
+          }
+          orders.unshift(rowToOrder(inserted));
+          toast("Pesanan tersimpan · " + inserted.no_spk);
+        }
+        closeForm();
+        render();
+        renderDashboard();
+      }
+
+      async function deleteOrder(id) {
+        const o = orders.find((x) => x.id === id);
+        if (!o) return;
+        if (!confirm("Hapus pesanan " + o.noSPK + " (" + o.nama + ")?")) return;
+        const { error } = await sb.from("orders").delete().eq("id", id);
+        if (error) {
+          toast("Gagal: " + error.message);
+          return;
+        }
+        orders = orders.filter((x) => x.id !== id);
+        render();
+        renderDashboard();
+        toast("Pesanan dihapus");
+      }
+
+      /* ---------- Render Table ---------- */
+      function getFiltered() {
+        const q = $("searchInput").value.trim().toLowerCase();
+        return orders.filter((o) => {
+          if (activeFilter !== "all" && o.status !== activeFilter) return false;
+          if (!q) return true;
+          return [o.noSPK, o.nama, o.produk, o.telepon, o.spek, o.status]
+            .join(" ")
+            .toLowerCase()
+            .includes(q);
+        });
+      }
+
+      function statusBadge(s) {
+        const cls =
+          {
+            Baru: "baru",
+            Proses: "proses",
+            Selesai: "selesai",
+            Batal: "batal",
+          }[s] || "baru";
+        return `<span class="badge ${cls}">${esc(s)}</span>`;
+      }
+
+      function render() {
+        const list = getFiltered();
+        const body = $("tableBody");
+
+        if (list.length === 0) {
+          const msg =
+            orders.length === 0
+              ? "Belum ada pesanan. Klik “+ Pesanan Baru” untuk mulai."
+              : "Tidak ada pesanan yang cocok dengan pencarian.";
+          body.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="big">NO RECORDS</div><p>${msg}</p></div></td></tr>`;
+          return;
+        }
+
+        body.innerHTML = list
+          .map((o) => {
+            const lunas = o.sisa <= 0 && o.total > 0;
+            let specLine = o.spek || "";
+            let qtyCell = String(o.qty);
+            if (o.mode === "m2") {
+              const dim = `${o.panjang}×${o.lebar}m · ${(o.luas || 0).toLocaleString("id-ID", { maximumFractionDigits: 2 })} m²`;
+              specLine = specLine ? dim + " · " + specLine : dim;
+              qtyCell = o.qty + " lbr";
+            }
+            if (!specLine) specLine = "—";
+            const payHtml =
+              o.total === 0
+                ? '<span class="pay belum">—</span>'
+                : lunas
+                  ? '<span class="pay lunas">LUNAS</span>'
+                  : `<span class="pay belum">Sisa<br>${rupiah(o.sisa)}</span>`;
+            return `
+      <tr>
+        <td>
+          <div class="nospk">${esc(o.noSPK)}</div>
+          <div class="sub">${fmtDate(o.tanggal)}</div>
+        </td>
+        <td>
+          <div class="cust">${esc(o.nama)}</div>
+          <div class="sub">${esc(o.telepon || "—")}</div>
+        </td>
+        <td>
+          <div>${esc(o.produk)}</div>
+          <div class="sub">${esc(specLine)}</div>
+        </td>
+        <td class="num">${esc(qtyCell)}</td>
+        <td class="num">${rupiah(o.total)}</td>
+        <td>${payHtml}</td>
+        <td>${statusBadge(o.status)}</td>
+        <td>
+          <div class="row-actions" style="justify-content:flex-end">
+            <button class="icon-btn" title="Cetak SPK" onclick="generateSPK('${o.id}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            </button>
+            <button class="icon-btn" title="Edit" onclick="openForm('edit','${o.id}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </button>
+            <button class="icon-btn" title="Hapus" onclick="deleteOrder('${o.id}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+          })
+          .join("");
+      }
+
+      /* ---------- Dashboard ---------- */
+      function renderDashboard() {
+        const totalOmzet = orders
+          .filter((o) => o.status !== "Batal")
+          .reduce((s, o) => s + o.total, 0);
+        const diterima = orders
+          .filter((o) => o.status !== "Batal")
+          .reduce(
+            (s, o) => s + Math.min(o.dp, o.total) + (o.sisa <= 0 ? 0 : 0),
+            0,
+          );
+        // diterima = sum of dp, plus full total when lunas
+        let received = 0,
+          piutang = 0;
+        orders
+          .filter((o) => o.status !== "Batal")
+          .forEach((o) => {
+            if (o.sisa <= 0) {
+              received += o.total;
+            } else {
+              received += o.dp;
+              piutang += o.sisa;
+            }
+          });
+
+        $("stOmzet").textContent = rupiah(totalOmzet);
+        $("stOmzetFoot").textContent = "dari " + orders.length + " pesanan";
+        $("stDiterima").textContent = rupiah(received);
+        $("stPiutang").textContent = rupiah(piutang);
+
+        // omzet bulan ini
+        const now = new Date();
+        const ym =
+          now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+        const bulanOmzet = orders
+          .filter(
+            (o) => o.status !== "Batal" && (o.tanggal || "").startsWith(ym),
+          )
+          .reduce((s, o) => s + o.total, 0);
+        $("stBulan").textContent = rupiah(bulanOmzet);
+        $("stBulanFoot").textContent = now.toLocaleDateString("id-ID", {
+          month: "long",
+          year: "numeric",
+        });
+
+        // status bars
+        const counts = { Baru: 0, Proses: 0, Selesai: 0, Batal: 0 };
+        orders.forEach((o) => {
+          if (counts[o.status] !== undefined) counts[o.status]++;
+        });
+        const max = Math.max(1, ...Object.values(counts));
+        const styleMap = {
+          Baru: "",
+          Proses: "hatch",
+          Selesai: "solid",
+          Batal: "dot",
+        };
+        $("statusBars").innerHTML = Object.keys(counts)
+          .map(
+            (k) => `
+    <div class="bar-row">
+      <div class="bl">${k}</div>
+      <div class="bar-track"><div class="bar-fill ${styleMap[k]}" style="width:${(counts[k] / max) * 100}%"></div></div>
+      <div class="bv">${counts[k]}</div>
+    </div>`,
+          )
+          .join("");
+        $("totalCount").textContent = orders.length + " ORDER";
+
+        // top produk by omzet
+        const prodMap = {};
+        orders
+          .filter((o) => o.status !== "Batal")
+          .forEach((o) => {
+            prodMap[o.produk] = (prodMap[o.produk] || 0) + o.total;
+          });
+        const top = Object.entries(prodMap)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6);
+        $("topProduk").innerHTML = top.length
+          ? top
+              .map(
+                ([p, v]) =>
+                  `<div class="ml-row"><span>${esc(p)}</span><span>${rupiah(v)}</span></div>`,
+              )
+              .join("")
+          : '<div class="ml-row"><span style="color:var(--mute)">Belum ada data</span><span></span></div>';
+      }
+
+      /* ---------- SPK Print ---------- */
+      function generateSPK(id) {
+        const o = orders.find((x) => x.id === id);
+        if (!o) return;
+        const lunas = o.sisa <= 0 && o.total > 0;
+        const isM2 = o.mode === "m2";
+        const spkQty = isM2 ? o.qty + " lbr" : o.qty;
+        const spkHarga = isM2 ? rupiah(o.harga) + " /m²" : rupiah(o.harga);
+        let spkSpec = o.spek || "";
+        if (isM2) {
+          const dim = `Ukuran ${o.panjang} × ${o.lebar} m · Luas ${(o.luas || 0).toLocaleString("id-ID", { maximumFractionDigits: 2 })} m² (${o.panjang}×${o.lebar} × ${o.qty} lbr)`;
+          spkSpec = spkSpec ? dim + " · " + spkSpec : dim;
+        }
+        $("spkSheet").innerHTML = `
+    <div class="spk-top">
+      <div class="spk-brand">
+        <div class="spk-mark">${esc(COMPANY.mark)}</div>
+        <div>
+          <h1>${esc(COMPANY.name)}</h1>
+          <p>${esc(COMPANY.tagline)}</p>
+        </div>
+      </div>
+      <div class="spk-title">
+        <div class="doc">SPK</div>
+        <div class="docsub">Surat Perintah Kerja</div>
+        <div class="spk-no">${esc(o.noSPK)}</div>
+      </div>
+    </div>
+
+    <div class="spk-meta">
+      <div class="mcell"><div class="mlabel">Pelanggan</div><div class="mval">${esc(o.nama)}</div></div>
+      <div class="mcell"><div class="mlabel">Telepon / WA</div><div class="mval">${esc(o.telepon || "—")}</div></div>
+      <div class="mcell"><div class="mlabel">Tanggal Order</div><div class="mval">${fmtDate(o.tanggal)}</div></div>
+      <div class="mcell"><div class="mlabel">Deadline</div><div class="mval">${fmtDate(o.deadline)}</div></div>
+    </div>
+
+    <table class="spk-table">
+      <thead><tr><th style="width:42px">No</th><th>Produk &amp; Spesifikasi</th><th class="r" style="width:60px">Qty</th><th class="r" style="width:130px">Harga</th><th class="r" style="width:140px">Subtotal</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><strong>${esc(o.produk)}</strong>${spkSpec ? '<br><span style="font-size:12px;color:#555">' + esc(spkSpec) + "</span>" : ""}</td>
+          <td class="r">${esc(String(spkQty))}</td>
+          <td class="r">${spkHarga}</td>
+          <td class="r">${rupiah(o.total)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="spk-totals">
+      <table>
+        <tr><td>Total</td><td>${rupiah(o.total)}</td></tr>
+        <tr><td>Uang Muka (DP)</td><td>${rupiah(o.dp)}</td></tr>
+        <tr class="grand"><td>${lunas ? "LUNAS" : "Sisa Pembayaran"}</td><td>${lunas ? "Rp 0" : rupiah(o.sisa)}</td></tr>
+      </table>
+    </div>
+
+    <div class="spk-notes">
+      <div class="nl">Catatan Produksi</div>
+      <div class="nv">${esc(o.catatan || "—")}</div>
+    </div>
+
+    <div class="spk-sign">
+      <div class="sg"><div class="role">Penerima Order</div><div class="line">( ____________ )</div></div>
+      <div class="sg"><div class="role">Bagian Produksi</div><div class="line">( ____________ )</div></div>
+      <div class="sg"><div class="role">Pelanggan</div><div class="line">( ${esc(o.nama)} )</div></div>
+    </div>
+
+    <div class="spk-pay">
+      <div class="pay-logo">
+        ${
+          PAYMENT.logoSrc
+            ? `<img src="${PAYMENT.logoSrc}" alt="${esc(PAYMENT.bank)}" style="height:${PAYMENT.logoHeight}px;display:block">`
+            : `<div class="pay-logo-fb">${esc(PAYMENT.bank.replace(/^BANK\s+/i, ""))}</div>`
+        }
+      </div>
+      <div class="pay-info">
+        <div class="pl">Pembayaran — Transfer Bank</div>
+        <div class="pv">${esc(PAYMENT.bank)} &nbsp;·&nbsp; <strong>${esc(PAYMENT.account)}</strong></div>
+        <div class="pa">a.n. ${esc(PAYMENT.holder)}</div>
+      </div>
+    </div>
+
+    <div class="spk-foot">
+      <span>JUST SECRET — DIGITAL PRINTING</span>
+      <span>STATUS: ${esc(o.status).toUpperCase()} · DICETAK ${new Date().toLocaleString("id-ID")}</span>
+    </div>
+  `;
+        window.print();
+      }
+
+      /* ---------- Export CSV ---------- */
+      function exportCSV() {
+        if (orders.length === 0) {
+          toast("Belum ada data untuk diexport");
+          return;
+        }
+        const headers = [
+          "No SPK",
+          "Tanggal",
+          "Nama",
+          "Telepon",
+          "Produk",
+          "Spesifikasi",
+          "Tipe Harga",
+          "Panjang (m)",
+          "Lebar (m)",
+          "Luas (m2)",
+          "Qty",
+          "Harga Satuan",
+          "Total",
+          "DP",
+          "Sisa",
+          "Status",
+          "Deadline",
+          "Catatan",
+        ];
+        const rows = orders.map((o) => [
+          o.noSPK,
+          o.tanggal,
+          o.nama,
+          o.telepon,
+          o.produk,
+          o.spek,
+          o.mode === "m2" ? "Per m2" : "Per Pcs",
+          o.panjang || "",
+          o.lebar || "",
+          o.luas || "",
+          o.qty,
+          o.harga,
+          o.total,
+          o.dp,
+          o.sisa,
+          o.status,
+          o.deadline,
+          o.catatan,
+        ]);
+        const csv = [headers, ...rows]
+          .map((r) =>
+            r
+              .map((c) => {
+                const s = String(c ?? "");
+                return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+              })
+              .join(","),
+          )
+          .join("\n");
+
+        const blob = new Blob(["\ufeff" + csv], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "JustSecret_Pesanan_" + todayISO() + ".csv";
+        a.click();
+        URL.revokeObjectURL(url);
+        toast("CSV diexport · " + orders.length + " baris");
+      }
+
+      /* ---------- Tabs & filters ---------- */
+      document.querySelectorAll("nav.tabs button").forEach((b) => {
+        b.addEventListener("click", () => {
+          document
+            .querySelectorAll("nav.tabs button")
+            .forEach((x) => x.classList.remove("active"));
+          document
+            .querySelectorAll(".view")
+            .forEach((x) => x.classList.remove("active"));
+          b.classList.add("active");
+          $("view-" + b.dataset.view).classList.add("active");
+        });
+      });
+      $("filterPills").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        document
+          .querySelectorAll("#filterPills button")
+          .forEach((x) => x.classList.remove("active"));
+        btn.classList.add("active");
+        activeFilter = btn.dataset.f;
+        render();
+      });
+
+      /* close modal on overlay click / ESC */
+      $("overlay").addEventListener("click", (e) => {
+        if (e.target === $("overlay")) closeForm();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && $("overlay").classList.contains("open"))
+          closeForm();
+      });
+
+      /* ---------- Auth + Init ---------- */
+      function checkPin() {
+        const v = $("pinInput").value;
+        if (v === APP_PIN) {
+          localStorage.setItem(AUTH_KEY, "1");
+          $("pinGate").classList.add("hidden");
+          $("pinErr").textContent = "";
+          boot();
+        } else {
+          const err = $("pinErr");
+          err.textContent = "✕ PIN salah";
+          err.classList.remove("shake");
+          void err.offsetWidth;
+          err.classList.add("shake");
+          $("pinInput").select();
+        }
+      }
+
+      function logout() {
+        if (!confirm("Keluar dari aplikasi?")) return;
+        localStorage.removeItem(AUTH_KEY);
+        location.reload();
+      }
+
+      async function boot() {
+        if (
+          SUPABASE_URL.includes("YOUR-PROJECT") ||
+          SUPABASE_ANON_KEY.includes("YOUR")
+        ) {
+          alert(
+            'Konfigurasi Supabase belum diisi.\n\nEdit index.html → cari "SUPABASE_URL" di awal <script> dan isi dengan URL + Anon Key proyek Supabase kamu.',
+          );
+          return;
+        }
+        await load();
+        render();
+        renderDashboard();
+        // Realtime sync — perubahan dari user lain otomatis muncul
+        sb.channel("orders-rt")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "orders" },
+            async () => {
+              await load();
+              render();
+              renderDashboard();
+            },
+          )
+          .subscribe();
+      }
+
+      $("todayMeta").textContent = new Date()
+        .toLocaleDateString("id-ID", {
+          weekday: "short",
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+        .toUpperCase();
+
+      if (localStorage.getItem(AUTH_KEY) === "1") {
+        $("pinGate").classList.add("hidden");
+        boot();
+      } else {
+        setTimeout(() => $("pinInput").focus(), 100);
+      }
+    </script>
+    <div class="pin-gate" id="pinGate">
+      <div class="pin-box">
+        <div class="pin-brand-wrap">
+          <div class="pin-mark">JS</div>
+          <div class="pin-brand">JUST <span class="redacted">SECRET</span></div>
+        </div>
+        <div class="pin-sub">Print Order Control · Restricted Access</div>
+        <input
+          type="password"
+          id="pinInput"
+          maxlength="12"
+          placeholder="••••"
+          autocomplete="off"
+          onkeydown="if (event.key === 'Enter') checkPin();"
+        />
+        <button class="pin-btn" onclick="checkPin()">Masuk</button>
+        <div class="pin-err" id="pinErr"></div>
+        <div class="pin-foot">Internal Use · Just Secret</div>
+      </div>
+    </div>
+  </body>
+</html>
