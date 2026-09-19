@@ -1518,8 +1518,10 @@
       /* ============================================================
    SUPABASE CONFIG — isi 3 baris di bawah ini sebelum deploy
    ============================================================ */
-      const SUPABASE_URL = "https://eubeggcdvldbqaayykyv.supabase.co";
-      const SUPABASE_ANON_KEY = "sb_publishable_cdwKAwWgmzXMcpxgxfZttg_8rUNtvfV";
+      // >>> ISI 3 BARIS INI DARI PROJECT SUPABASE BARU <<<
+      // Dashboard Supabase -> Settings -> API
+      const SUPABASE_URL = "https://adjnmlrvyykcrymzhkry.supabase.co"; // ganti: Project URL
+      const SUPABASE_ANON_KEY = "sb_secret_AJB_zxT3vESMelNdRyAMEg_FvyFaefD"; // ganti: anon / publishable key (BUKAN service_role)
       const APP_PIN = "150404"; // ganti dengan PIN tim kamu
 
       const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
